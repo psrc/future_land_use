@@ -1,0 +1,41 @@
+# input and output paths, either relative to the project root or absolute paths. 
+data_dir: data
+output_dir: output
+
+
+#-----# File paths
+# GDB that contains the overlay layers for each jurisdiction. Specify the jurisdiction name that
+# matches the juris column in the FLU table and either the juris_zn_col or zone_col for each layer.
+overlay_gdb_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Projects/FLU/FLU_draft2.gdb
+overlay_layers:
+  - juris: University_Place
+    layer: UP_overlay
+    juris_zn_col: Juris_zn
+
+  - juris: Poulsbo
+    layer: Poulsbo_overlay
+    zone_col: zone_psrc
+
+  - juris: Kitsap
+    layer: Silverdale_overlay
+    zone_col: zone_psrc
+
+  - juris: Tacoma
+    layer: Tacoma_overlays_stacked
+    juris_zn_col: Juris_zn
+
+# FLU table path and juris_zn column
+flu_table_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Projects/FLU/Zoning_2026_d3.xlsx
+flu_juris_zn_col: juris_zn
+
+
+#-----# Output settings
+# Once the manual match process for the overlay layers is complete and there are no unmatched zones  
+# in the combine overlay layer, set this to True to write the final overlay gdf to the input geodatabase
+write_final_overlays_to_input_gdb: True
+final_overlay_layer_name: overlays_combined
+
+
+#-----# Pypyr steps to run
+steps:
+  - future_land_use.steps.combine_overlays
