@@ -36,22 +36,22 @@ class Pipeline:
 
     def get_output_path(self, *path_parts):
         return self._resolve_workspace_path(self.settings.get('output_dir'), 'output').joinpath(*path_parts)
-
-    def get_hdf5_path(self):
-        return self.get_data_path('pipeline.h5')
+    
+    def get_pipeline_path(self, *path_parts):
+        return self.get_output_path('pipeline').joinpath(*path_parts)
     
     def get_output_table_list(self):
         # Returns a list of output table names from settings.yaml
         return self.settings.get('output_table_list', [])
 
     def get_table(self, table_name):
-        with pd.HDFStore(self.get_hdf5_path(), mode='r') as h5store:
-            return h5store.get(table_name)
+        pipeline_path = self.get_pipeline_path()
+        return pd.read_parquet(pipeline_path / f"{table_name}.parquet")
 
     def save_table(self, table_name, df):
-        print(f"Saving table {table_name} to HDF5 store...")
-        with pd.HDFStore(self.get_hdf5_path(), mode='a') as h5store:
-            h5store.put(table_name, df, format='table')
+        print(f"Saving table {table_name} to pipeline...")
+        pipeline_path = self.get_pipeline_path()
+        df.to_parquet(pipeline_path / f"{table_name}.parquet")
 
     def save_geodataframe(self, name, gdf):
         gdf['geometry_wkt'] = gdf.geometry.to_wkt()

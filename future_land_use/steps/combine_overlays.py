@@ -68,17 +68,17 @@ def apply_manual_matches(gdf,flu_table,data_dir):
 
 def run_step(context):
     p = Pipeline(settings_path=context['configs_dir'])
-    cfg = p.settings
-    input_overlay_gdb = cfg['overlay_gdb_path']
+    cfg = p.settings.get('overlay_settings', {})
+    input_overlay_gdb = cfg.get('overlay_gdb_path', '')
 
     # load flu table
-    flu_table_path = cfg['flu_table_path']
-    flu_juris_zn_col = cfg['flu_juris_zn_col']
+    flu_table_path = cfg.get('flu_table_path', '')
+    flu_juris_zn_col = cfg.get('flu_juris_zn_col', '')
     df = pd.read_excel(flu_table_path)
     df['juris_zn'] = df[flu_juris_zn_col]
 
     # load overlay gis layers
-    gdf = load_overlay_layers(input_overlay_gdb, cfg['overlay_layers'])
+    gdf = load_overlay_layers(input_overlay_gdb, cfg.get('overlay_layers', []))
 
     # apply manual matches to the gdf and save the manual match csv for review and editing
     # re-run the scripts after editing the manual match file to apply the manual matches
@@ -91,6 +91,6 @@ def run_step(context):
 
     # once all unmatched polygons have been corrected, set write_final_overlays_to_input_gdb to True 
     # in settings.yaml to write the final overlay gdf to the original overlay input geodatabase
-    if cfg['write_final_overlays_to_input_gdb']:
+    if cfg.get('write_final_overlays_to_input_gdb', False):
         today = pd.Timestamp.now().strftime('%Y_%m%d')
-        gdf.to_file(input_overlay_gdb, driver='OpenFileGDB', layer=f"{cfg['final_overlay_layer_name']}_{today}", promote_to_multi=True)
+        gdf.to_file(input_overlay_gdb, driver='OpenFileGDB', layer=f"{cfg.get('final_overlay_layer_name', 'overlays_combined')}_{today}", promote_to_multi=True)
