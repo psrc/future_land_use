@@ -28,21 +28,38 @@ overlay_settings:
     - juris: Tacoma
       layer: Tacoma_overlays_stacked
       juris_zn_col: Juris_zn
-
+  
+  # If True, write the final combined overlays to the input GDB as a new layer. 
+  # The layer name is specified in final_overlay_layer_name. Will automatically be written 
+  # to the output dir in overlay_layers_merged.gdb
   write_final_overlays_to_input_gdb: True
   final_overlay_layer_name: overlays_combined
 
 
 #---------------------------------------------------------------------------------------------------
 hb1110_settings:
+  # input gdb that contains the hb1110 transit walksheds layer
   transit_gdb_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Projects/FLU/transit_hb_1110.gdb
-  transit_walksheds_layer: hb_1110_walksheds # hb1110 transit walksheds layer
-  output_parcel_layer: hb_1110_parcels
-  output_cities_walkshed: True # takes awhile to pull parcel polygons in
-  output_cities_walkshed_name: hb_1110_cities_walkshed # must be set if output_cities_walkshed is True
+  transit_walksheds_layer: hb_1110_walksheds # hb1110 input transit walksheds layer name
+  
+  # if true, output a layer of hb1110 cities and walksheds based on dissolved parcels, can 
+  # take a long time to load, so if visual check is not needed, set to false
+  output_cities_walkshed: False
+  # name of the hb1110 cities and walkshed output layer, must be set if output_cities_walkshed is True
+  output_cities_walkshed_name: hb_1110_cities_walkshed # will be saved in output dir in hb_1110_cities_walkshed.gdb
 
+
+#------------------------------------------------------------------------------------------------
+unroll_constraints_settings:
+  root_dir: Q:/Projects/2023_Baseyear/FLU_and_Lockouts
+  flu_shp: GIS/FLU_2025/FLU_20260522/QC/FLU2025_final.shp # path relative to root_dir
+  juris_zn_shp_id: Juris_zn # unique id column in flu_shp
+  flu_imputed: imputation_data/final_flu_imputed_2026-06-15.csv # path relative to root_dir
+  juris_zn_imputed_id: juris_zn # unique id column in flu_imputed
+  base_year_parcel_layer: parcels_urbansim_2023_pts # ElmerGeo layer name for parcel points
+  base_year_cache: L:/base_year_2023_inputs/JobParcel/base_year_data/2023/parcels # urbansim baseyear cache
 
 #---------------------------------------------------------------------------------------------------
 steps: # pypyr pipeline steps to run
   - future_land_use.steps.combine_overlays
-  # - future_land_use.steps.flag_hb_1110_parcels
+  - future_land_use.steps.flag_hb_1110_parcels

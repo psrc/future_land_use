@@ -85,6 +85,9 @@ def run_step(context):
     gdf = apply_manual_matches(gdf,df,p.get_data_path())
     print(len(gdf[gdf['match_flag']==False]), "rows in the overlay layers that don't have a match in the flu table after applying manual matches")
 
+    # save gdf to pipeline for use in future steps
+    p.save_geodataframe(gdf,'overlays_merged')
+
     # write the combined gdf to gdb for checking
     output_gdb_path = os.path.join(p.get_output_path(), 'overlay_layers_merged.gdb')
     gdf.to_file(output_gdb_path, driver='OpenFileGDB', layer='overlays_merged',promote_to_multi=True)
