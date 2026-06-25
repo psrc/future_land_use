@@ -53,7 +53,8 @@ class Pipeline:
         pipeline_path = self.get_pipeline_path()
         df.to_parquet(pipeline_path / f"{table_name}.parquet")
 
-    def save_geodataframe(self,gdf, name):
+    def save_geodataframe(self,gdf, name,crs='epsg:2285'):
+        gdf = gdf.to_crs(crs)
         gdf['geometry_wkt'] = gdf.geometry.to_wkt()
         gdf_to_save = gdf.drop(columns=['geometry'])
         self.save_table(gdf_to_save, name)

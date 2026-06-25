@@ -97,3 +97,4 @@ def run_step(context):
     if cfg.get('write_final_overlays_to_input_gdb', False):
         today = pd.Timestamp.now().strftime('%Y_%m%d')
         gdf.to_file(input_overlay_gdb, driver='OpenFileGDB', layer=f"{cfg.get('final_overlay_layer_name', 'overlays_combined')}_{today}", promote_to_multi=True)
+    return context

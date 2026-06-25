@@ -7,7 +7,7 @@ def get_elmer_geo_layer(layer_name):
     return elmer_conn.read_geolayer(layer_name)
 
 def load_transit_walkshed(gdb_path, layer_name):
-    return gpd.read_file(gdb_path, layer=layer_name).to_crs("EPSG:4326")
+    return gpd.read_file(gdb_path, layer=layer_name).to_crs("EPSG:2285")
 
 def flag_transit_parcels(parcels, cities, hct_walkshed):
     # filter hb1110 cities and spatial join to parcels
@@ -52,13 +52,15 @@ def run_step(context):
     output_dir = p.get_output_path()
     
     hct_walkshed = load_transit_walkshed(cfg['transit_gdb_path'], cfg['transit_walksheds_layer'])
-    cities = get_elmer_geo_layer('CITIES')
-    parcels = get_elmer_geo_layer('PARCELS_URBANSIM_2023_PTS')
+    cities = p.get_geodataframe('cities')
+    parcels = p.get_geodataframe('parcels_pts')
     
     parcels_flags = flag_transit_parcels(parcels, cities, hct_walkshed)
     p.save_table(parcels_flags.drop(columns=['geometry']),'hb_1110_parcels',)
     
     if cfg.get('output_cities_walkshed', False):
+        # parcel polygons are not saved in the pipeline due to size and are only needed
+        # for doing a visual check of the parcel-to-walkshed spatial join.
         output_layer = cfg['output_cities_walkshed_name']
         parcel_polygons = get_elmer_geo_layer('PARCELS_URBANSIM_2023')
-        export_dissolved_parcels(parcel_polygons, parcels_flags, output_dir, output_layer)
+    return context

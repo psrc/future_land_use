@@ -2,6 +2,11 @@
 data_dir: data
 output_dir: output
 
+elmer_geo_layers: # elmer geo layers to download
+  # name, sql table
+  parcels_pts: PARCELS_URBANSIM_2023_PTS
+  cities: CITIES
+
 
 #---------------------------------------------------------------------------------------------------
 overlay_settings:
@@ -32,7 +37,7 @@ overlay_settings:
   # If True, write the final combined overlays to the input GDB as a new layer. 
   # The layer name is specified in final_overlay_layer_name. Will automatically be written 
   # to the output dir in overlay_layers_merged.gdb
-  write_final_overlays_to_input_gdb: True
+  write_final_overlays_to_input_gdb: False
   final_overlay_layer_name: overlays_combined
 
 
@@ -54,12 +59,14 @@ unroll_constraints_settings:
   root_dir: Q:/Projects/2023_Baseyear/FLU_and_Lockouts
   flu_shp: GIS/FLU_2025/FLU_20260522/QC/FLU2025_final.shp # path relative to root_dir
   juris_zn_shp_id: Juris_zn # unique id column in flu_shp
-  flu_imputed: imputation_data/final_flu_imputed_2026-06-15.csv # path relative to root_dir
+  flu_imputed: imputation_data/final_flu_imputed_2026-06-24.csv # path relative to root_dir
   juris_zn_imputed_id: juris_zn # unique id column in flu_imputed
   base_year_parcel_layer: parcels_urbansim_2023_pts # ElmerGeo layer name for parcel points
   base_year_cache: L:/base_year_2023_inputs/JobParcel/base_year_data/2023/parcels # urbansim baseyear cache
 
 #---------------------------------------------------------------------------------------------------
 steps: # pypyr pipeline steps to run
-  - future_land_use.steps.combine_overlays
+  # - future_land_use.steps.get_elmer_data
+  # - future_land_use.steps.combine_overlays
+  # - future_land_use.steps.flag_overlay_parcels
   - future_land_use.steps.flag_hb_1110_parcels
