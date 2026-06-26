@@ -63,11 +63,18 @@ unroll_constraints_settings:
   juris_zn_imputed_id: juris_zn # unique id column in flu_imputed
   base_year_parcel_layer: parcels_urbansim_2023_pts # ElmerGeo layer name for parcel points
   base_year_cache: L:/base_year_2023_inputs/JobParcel/base_year_data/2023/parcels # urbansim baseyear cache
+  parcel_id_col: parcel_id
+  apply_hb_1110: True # if True, apply HB 1110 rules to imputed FLU data, otherwise use original imputed FLU data without HB 1110 rules applied
 
 #---------------------------------------------------------------------------------------------------
 steps: # pypyr pipeline steps to run
+  # - future_land_use.steps.load_data
   # - future_land_use.steps.get_elmer_data
   # - future_land_use.steps.combine_overlays
   # - future_land_use.steps.flag_overlay_parcels
   # - future_land_use.steps.flag_hb_1110_parcels
+  # - future_land_use.steps.apply_hb_1110_to_flu
+  - future_land_use.steps.parcel_flu_spatial_join
+  - future_land_use.steps.apply_overlays
+  - future_land_use.steps.apply_hb_1110_to_parcels
   - future_land_use.steps.unroll_constraints

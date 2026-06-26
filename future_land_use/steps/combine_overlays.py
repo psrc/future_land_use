@@ -67,6 +67,7 @@ def apply_manual_matches(gdf,flu_table,data_dir):
     return gdf[['juris','juris_zn','match_flag','geometry']]
 
 def run_step(context):
+    print("Running step: combine_overlays...")
     p = Pipeline(settings_path=context['configs_dir'])
     cfg = p.settings.get('overlay_settings', {})
     input_overlay_gdb = cfg.get('overlay_gdb_path', '')
