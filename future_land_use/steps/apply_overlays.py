@@ -27,8 +27,8 @@ def _build_parcels_to_update(p, f, all_df):
 
     # drop non-duplicates because if there's only 1 parcel_id then it means it must land
     # on an overlay but not another underlying zone
-    overlay_only = parcels_to_update.duplicated(subset='parcel_id')
-    print(f"Parcels that land on an overlay but not another underlying zone: {len(parcels_to_update[overlay_only])}")
+    overlay_only = parcels_to_update.duplicated(subset='parcel_id', keep=False)
+    print(f"Parcels that land on an overlay but not another underlying zone: {len(parcels_to_update[~overlay_only])}")
     parcels_to_update = parcels_to_update[overlay_only].copy()
 
     # find all existing combinations of plan_type_id based on parcel_id
@@ -97,7 +97,7 @@ def _build_overlay_plan_types(parcels_to_update, f, OUTPUT, today):
     overlay_plan_types_out['plan_type_id'] = len(f) + np.arange(len(overlay_plan_types_out)) + 1
 
     # create new juris_zn for overlay combinations
-    overlay_plan_types_out['juris_zn'] = overlay_plan_types_out['orig_juris_zn'] + overlay_plan_types_out['overlay_juris_zn']
+    overlay_plan_types_out['juris_zn'] = overlay_plan_types_out['orig_juris_zn'] + '_' + overlay_plan_types_out['overlay_juris_zn']
     overlay_plan_types_out.drop(columns=['orig_juris_zn', 'overlay_juris_zn'], inplace=True)
 
     return overlay_plan_types_out
