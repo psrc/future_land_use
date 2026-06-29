@@ -178,6 +178,7 @@ def _run_hb1110_analysis(all_df, f, OUTPUT, today):
     )
 
 
+
 # ===================================================================
 def run_step(context):
     print("Running step: unroll_constraints...")
@@ -197,7 +198,7 @@ def run_step(context):
 
     parcels_land_use = p.get_table('parcels_land_use_type')
     all_df = all_df.merge(parcels_land_use, on='parcel_id', how='left')
-    
+
     # ---- lot coverage: percent → proportion ----
     for lc_col in LC_COLS:
         f[lc_col] = f[lc_col] / 100
@@ -229,12 +230,15 @@ def run_step(context):
         sf, mf, off, comm, ind, mixed, mixed_du, sf_du_lot, mf_du_lot,
     ], sort=False)
 
-    # ---- clamp minimum > maximum ----
+    # ---- clamp minimum < maximum ----
+    devconstr['minimum'] = devconstr['minimum'].fillna(0)
+    devconstr['maximum'] = devconstr['maximum'].fillna(0)
+    
     _min_gt_max = (
         devconstr['minimum'].notna() & devconstr['maximum'].notna()
         & (devconstr['minimum'] > devconstr['maximum'])
     )
-    print(f"Rows where minimum > maximum (clamped to maximum): {int(_min_gt_max.sum())}")
+    print(f"Rows where minimum > maximum: {int(_min_gt_max.sum())}")
     devconstr.loc[_min_gt_max, 'minimum'] = devconstr.loc[_min_gt_max, 'maximum']
 
     # ---- consistency check (ptids) ----

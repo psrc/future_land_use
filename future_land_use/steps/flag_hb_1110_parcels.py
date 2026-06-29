@@ -63,4 +63,5 @@ def run_step(context):
         # for doing a visual check of the parcel-to-walkshed spatial join.
         output_layer = cfg['output_cities_walkshed_name']
         parcel_polygons = get_elmer_geo_layer('PARCELS_URBANSIM_2023')
+        export_dissolved_parcels(parcel_polygons, parcels_flags, output_dir, output_layer)
     return context
