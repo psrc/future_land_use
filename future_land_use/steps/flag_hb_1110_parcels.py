@@ -51,7 +51,7 @@ def run_step(context):
     data_dir = p.get_data_path()
     output_dir = p.get_output_path()
     
-    hct_walkshed = load_transit_walkshed(cfg['transit_gdb_path'], cfg['transit_walksheds_layer'])
+    hct_walkshed = load_transit_walkshed(p.get_onedrive_path(cfg['transit_gdb_path']), cfg['transit_walksheds_layer'])
     cities = get_elmer_geo_layer('CITIES')
     parcels = get_elmer_geo_layer('PARCELS_URBANSIM_2023_PTS')
     

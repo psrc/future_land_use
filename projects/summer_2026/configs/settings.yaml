@@ -6,12 +6,12 @@ output_dir: output
 #---------------------------------------------------------------------------------------------------
 overlay_settings:
   # FLU table path and juris_zn column
-  flu_table_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Projects/FLU/Zoning_2026_d3.xlsx
+  flu_table_path: GIS - Sharing/Projects/FLU/Zoning_2026_d3.xlsx
   flu_juris_zn_col: juris_zn
   
   # GDB that contains the overlay layers for each jurisdiction. Specify the jurisdiction name that
   # matches the juris column in the FLU table and either the juris_zn_col or zone_col for each layer.
-  overlay_gdb_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Projects/FLU/FLU_draft2.gdb
+  overlay_gdb_path: GIS - Sharing/Projects/FLU/FLU_draft2.gdb
   overlay_layers:
     - juris: University_Place
       layer: UP_overlay
@@ -38,9 +38,16 @@ overlay_settings:
 
 #---------------------------------------------------------------------------------------------------
 hb1110_settings:
-  # input gdb that contains the hb1110 transit walksheds layer
-  transit_gdb_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Projects/FLU/transit_hb_1110.gdb
+  # walkshed settings:
+  arcpy_python_path: C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/python.exe
+  network_dataset_path: GIS - Sharing/Users/Stefan/hb_1110/walksheds/walk_network.gdb/walknet/walknet_ND
+  distance_field_name: 1320
+  dissolve_walksheds: True
+  impedance_attribute: "Length"
+  transit_gdb_path: GIS - Sharing/Projects/FLU/transit_hb_1110.gdb
+  station_fc_name: hb_1110_city_stops # hb1110 input transit stations layer name
   transit_walksheds_layer: hb_1110_walksheds # hb1110 input transit walksheds layer name
+  search_tolerance: 5000
   
   # if true, output a layer of hb1110 cities and walksheds based on dissolved parcels, can 
   # take a long time to load, so if visual check is not needed, set to false
@@ -61,5 +68,6 @@ unroll_constraints_settings:
 
 #---------------------------------------------------------------------------------------------------
 steps: # pypyr pipeline steps to run
+  - future_land_use.steps.run_walksheds
   - future_land_use.steps.combine_overlays
   - future_land_use.steps.flag_hb_1110_parcels
