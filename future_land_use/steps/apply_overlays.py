@@ -121,7 +121,8 @@ def run_step(context):
     print("Running step: Applying overlays...")
     p = Pipeline(settings_path=context['configs_dir'])
     cfg = p.settings.get('unroll_constraints_settings', {})
-    ROOT = cfg['root_dir']
+    global_cfg = p.settings
+    ROOT = global_cfg['root_dir']
     OUTPUT = os.path.join(ROOT, "unroll_constraints")
     today = pd.to_datetime("today").date()
 

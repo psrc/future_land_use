@@ -69,14 +69,12 @@ def apply_manual_matches(gdf,flu_table,data_dir):
 def run_step(context):
     print("Running step: combine_overlays...")
     p = Pipeline(settings_path=context['configs_dir'])
+    global_cfg = p.settings
     cfg = p.settings.get('overlay_settings', {})
     input_overlay_gdb = cfg.get('overlay_gdb_path', '')
 
     # load flu table
-    flu_table_path = cfg.get('flu_table_path', '')
-    flu_juris_zn_col = cfg.get('flu_juris_zn_col', '')
-    df = pd.read_excel(flu_table_path)
-    df['juris_zn'] = df[flu_juris_zn_col]
+    df = p.get_table('flu_table')
 
     # load overlay gis layers
     gdf = load_overlay_layers(input_overlay_gdb, cfg.get('overlay_layers', []))
@@ -84,7 +82,15 @@ def run_step(context):
     # apply manual matches to the gdf and save the manual match csv for review and editing
     # re-run the scripts after editing the manual match file to apply the manual matches
     gdf = apply_manual_matches(gdf,df,p.get_data_path())
-    print(len(gdf[gdf['match_flag']==False]), "rows in the overlay layers that don't have a match in the flu table after applying manual matches")
+    unmatched = gdf[gdf['match_flag'] == False]
+    n_unmatched = len(unmatched)
+    if n_unmatched > 0:
+        raise RuntimeError(
+            f"{n_unmatched} overlay zone(s) still have no match in the FLU table "
+            f"after applying manual matches:\n"
+            + unmatched[['juris', 'juris_zn']].to_string(index=False)
+            + "\nEdit the manual match CSV and re-run to resolve."
+        )
 
     # save gdf to pipeline for use in future steps
     p.save_geodataframe(gdf,'overlays_merged')

@@ -1,3 +1,7 @@
+#-----------------------------------------------------------------------------------------------
+# Global settings
+#-----------------------------------------------------------------------------------------------
+
 # input and output paths, either relative to the project root or absolute paths. 
 data_dir: data
 output_dir: output
@@ -7,16 +11,64 @@ elmer_geo_layers: # elmer geo layers to download
   parcels_pts: PARCELS_URBANSIM_2023_PTS
   cities: CITIES
 
+# root dir - used for inputs and outputs
+root_dir: Q:/Projects/2023_Baseyear/FLU_and_Lockouts
+
+# path to FLU table
+flu_table_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Sharing/Projects/FLU/Zoning_2026_d3.xlsx
+flu_table_sheet: Sheet1 # sheet name in the flu table
+flu_table_rename_cols:
+  Juris: juris
+  Definition: definition
+
+# path to FLU GIS layer
+flu_shp: GIS/FLU_2025/FLU_20260522/QC/FLU2025_final.shp # path relative to root_dir above
+flu_shp_rename_cols:
+  Juris_zn: juris_zn
+
 
 #---------------------------------------------------------------------------------------------------
+# old flu crosswalk settings
+#---------------------------------------------------------------------------------------------------
+old_flu_crosswalk_settings:
+  current_flu_year: 2026
+  old_flu_year: 2019
+  old_flu_shp: W:/gis/projects/compplan_zoning/flu19_reviewed.shp
+  old_flu_shp_rename_cols:
+    Juris_zn: juris_zn
+    Jurisdicti: juris
+
+  old_crosswalk: J:/Staff/Christy/usim-baseyear/flu/Full_FLU_Master_Corres_File.xlsx 
+  old_crosswalk_rename_cols:
+    FLUadj_Key: juris_zn
+    FLUadj_Definition: definition
+  old_crosswalk_sheet: Full Master FLU Corres File # sheet name in the old flu crosswalk table
+  fuzzy_match_cutoff: 0.4       # SequenceMatcher ratio required to accept a fuzzy name match
+  spatial_overlap_cutoff: 0.9   # share of new-zone area overlapping an old zone to auto-accept
+  crosswalk_output_dir: old_flu_crosswalk # output directory for old flu crosswalk files, relative to root_dir above or absolute
+
+
+#---------------------------------------------------------------------------------------------------
+# Imputation settings
+#---------------------------------------------------------------------------------------------------
+imputation_settings:
+  # Path to the R executable (e.g. Rscript.exe on Windows)
+  r_executable_path: C:/Program Files/R/R-4.5.2/bin/Rscript.exe
+  # Path to the imputation R script, relative to the project root
+  r_script_path: future_land_use/r_scripts/imputation_FLU2026.R
+  # Output directory, relative to root_dir above or absolute
+  output_dir: imputation_data
+  # Paths relative to root_dir
+  old_flu_crosswalk: old_flu_crosswalk/Full_FLU_Master_Corres_File_2026-06-03.xlsx
+  old_flu: old_flu/final_flu_postprocessed_2023-01-10.csv
+
+#---------------------------------------------------------------------------------------------------
+# Overlay settings
+#---------------------------------------------------------------------------------------------------
 overlay_settings:
-  # FLU table path and juris_zn column
-  flu_table_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Projects/FLU/Zoning_2026_d3.xlsx
-  flu_juris_zn_col: juris_zn
-  
   # GDB that contains the overlay layers for each jurisdiction. Specify the jurisdiction name that
   # matches the juris column in the FLU table and either the juris_zn_col or zone_col for each layer.
-  overlay_gdb_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Projects/FLU/FLU_draft2.gdb
+  overlay_gdb_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Sharing/Projects/FLU/FLU_draft2.gdb
   overlay_layers:
     - juris: University_Place
       layer: UP_overlay
@@ -40,11 +92,12 @@ overlay_settings:
   write_final_overlays_to_input_gdb: False
   final_overlay_layer_name: overlays_combined
 
-
+#---------------------------------------------------------------------------------------------------
+# HB 1110 settings
 #---------------------------------------------------------------------------------------------------
 hb1110_settings:
   # input gdb that contains the hb1110 transit walksheds layer
-  transit_gdb_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Projects/FLU/transit_hb_1110.gdb
+  transit_gdb_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Sharing/Projects/FLU/transit_hb_1110.gdb
   transit_walksheds_layer: hb_1110_walksheds # hb1110 input transit walksheds layer name
   
   # if true, output a layer of hb1110 cities and walksheds based on dissolved parcels, can 
@@ -53,28 +106,31 @@ hb1110_settings:
   # name of the hb1110 cities and walkshed output layer, must be set if output_cities_walkshed is True
   output_cities_walkshed_name: hb_1110_cities_walkshed # will be saved in output dir in hb_1110_cities_walkshed.gdb
 
-
+#------------------------------------------------------------------------------------------------
+# Unroll constraints settings
 #------------------------------------------------------------------------------------------------
 unroll_constraints_settings:
-  root_dir: Q:/Projects/2023_Baseyear/FLU_and_Lockouts
-  flu_shp: GIS/FLU_2025/FLU_20260522/QC/FLU2025_final.shp # path relative to root_dir
-  juris_zn_shp_id: Juris_zn # unique id column in flu_shp
-  flu_imputed: imputation_data/final_flu_imputed_2026-06-24.csv # path relative to root_dir
+  flu_imputed_dir: imputation_data # path relative to root_dir above
   juris_zn_imputed_id: juris_zn # unique id column in flu_imputed
   base_year_parcel_layer: parcels_urbansim_2023_pts # ElmerGeo layer name for parcel points
   base_year_cache: L:/base_year_2023_inputs/JobParcel/base_year_data/2023/parcels # urbansim baseyear cache
   parcel_id_col: parcel_id
   apply_hb_1110: True # if True, apply HB 1110 rules to imputed FLU data, otherwise use original imputed FLU data without HB 1110 rules applied
 
+
+#---------------------------------------------------------------------------------------------------
+# Pipeline steps
 #---------------------------------------------------------------------------------------------------
 steps: # pypyr pipeline steps to run
   - future_land_use.steps.load_data
-  - future_land_use.steps.get_elmer_data
-  - future_land_use.steps.combine_overlays
-  - future_land_use.steps.flag_overlay_parcels
-  - future_land_use.steps.flag_hb_1110_parcels
-  - future_land_use.steps.apply_hb_1110_to_flu
-  - future_land_use.steps.parcel_flu_spatial_join
-  - future_land_use.steps.apply_overlays
-  - future_land_use.steps.apply_hb_1110_to_parcels
-  - future_land_use.steps.unroll_constraints
+  # - future_land_use.steps.get_elmer_data
+  # - future_land_use.steps.combine_overlays
+  # - future_land_use.steps.flag_overlay_parcels
+  # - future_land_use.steps.flag_hb_1110_parcels
+  - future_land_use.steps.create_old_flu_crosswalk
+  # - future_land_use.steps.impute_flu 
+  # - future_land_use.steps.apply_hb_1110_to_flu
+  # - future_land_use.steps.parcel_flu_spatial_join
+  # - future_land_use.steps.apply_overlays
+  # - future_land_use.steps.apply_hb_1110_to_parcels
+  # - future_land_use.steps.unroll_constraints
