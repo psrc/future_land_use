@@ -88,6 +88,6 @@ def run_step(context):
 
     # imputed flu
     ROOT = global_cfg['root_dir']
-    FLU_IMP_DIR = os.path.join(ROOT, cfg['flu_imputed_dir'])
+    FLU_IMP_DIR = os.path.join(ROOT, cfg['output_dir'])
     juris_zn_imputed_id = cfg['juris_zn_imputed_id'] # unique id column
     _load_flu_imputed(p, FLU_IMP_DIR, juris_zn_imputed_id)

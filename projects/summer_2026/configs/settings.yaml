@@ -58,9 +58,11 @@ imputation_settings:
   r_script_path: future_land_use/r_scripts/imputation_FLU2026.R
   # Output directory, relative to root_dir above or absolute
   output_dir: imputation_data
+  juris_zn_imputed_id: juris_zn # unique id column in flu_imputed
   # Paths relative to root_dir
   old_flu_crosswalk: old_flu_crosswalk/Full_FLU_Master_Corres_File_2026-06-03.xlsx
   old_flu: old_flu/final_flu_postprocessed_2023-01-10.csv
+
 
 #---------------------------------------------------------------------------------------------------
 # Overlay settings
@@ -110,8 +112,6 @@ hb1110_settings:
 # Unroll constraints settings
 #------------------------------------------------------------------------------------------------
 unroll_constraints_settings:
-  flu_imputed_dir: imputation_data # path relative to root_dir above
-  juris_zn_imputed_id: juris_zn # unique id column in flu_imputed
   base_year_parcel_layer: parcels_urbansim_2023_pts # ElmerGeo layer name for parcel points
   base_year_cache: L:/base_year_2023_inputs/JobParcel/base_year_data/2023/parcels # urbansim baseyear cache
   parcel_id_col: parcel_id
