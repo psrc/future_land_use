@@ -42,7 +42,7 @@ def apply_manual_matches(gdf,flu_table,data_dir):
         gdf['juris_zn'] = np.where(gdf['juris_zn_manual_match'].notnull(), gdf['juris_zn_manual_match'], gdf['juris_zn'])
 
     # merge overlay layers with flu table, flag rows that don't have a match
-    gdf = gdf.merge(flu_table, on='juris_zn', how='left')
+    gdf = gdf.merge(flu_table, on=['juris','juris_zn'], how='left')
     gdf['match_flag'] = gdf['juris_zn'].isin(flu_table['juris_zn'])
     gdf_out = gdf.loc[(gdf['match_flag']==False),'juris_zn'].to_frame()
 

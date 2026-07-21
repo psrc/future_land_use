@@ -30,9 +30,9 @@ cols.sets <- pmap(list(use.cols, min.cols, max.cols, maxht.cols, lc.cols, floor.
     map(~set_names(.x, c("use", "min_dens", "max_dens", "height", "lc", "floor_height"))) %>% 
     set_names(c("Res", "Comm", "Office", "Indust", "Mixed"))
 
-# clean Use columns and convert to numeric (1 for Y, 0 for N, -1 for null)
+# clean Use columns and convert to logical
 for(col in use.cols){
-    flu[, (col) := ifelse(is.na(get(col)), -1, ifelse(tolower(get(col)) == "y", 1, 0))]
+    flu[, (col) := as.logical(ifelse(!is.na(get(col)) & tolower(get(col)) == "y", TRUE, FALSE))]
 }
 
 # add missing density items

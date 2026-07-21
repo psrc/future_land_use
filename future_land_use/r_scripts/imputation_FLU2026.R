@@ -11,45 +11,45 @@ library(data.table)
 library(foreign)
 library(readxl)
 
-# ---- parse command-line arguments (or use defaults) ----
+# ---- parse command-line arguments ----
 .args <- commandArgs(trailingOnly = TRUE)
-if (length(.args) > 0) {
-    # Support both --key=value and --key value formats
-    .arglist <- list()
-    .i <- 1
-    while (.i <= length(.args)) {
-        .a <- .args[.i]
-        if (grepl("^--", .a)) {
-            if (grepl("=", .a)) {
-                # format: --key=value
-                .kv <- strsplit(sub("^--", "", .a), "=")[[1]]
-                .arglist[[.kv[1]]] <- .kv[2]
-                .i <- .i + 1
-            } else {
-                # format: --key value
-                .key <- sub("^--", "", .a)
-                .i <- .i + 1
-                if (.i <= length(.args) && !grepl("^--", .args[.i])) {
-                    .arglist[[.key]] <- .args[.i]
-                    .i <- .i + 1
-                }
-            }
-        } else {
+# Support both --key=value and --key value formats
+.arglist <- list()
+.i <- 1
+while (.i <= length(.args)) {
+    .a <- .args[.i]
+    if (grepl("^--", .a)) {
+        if (grepl("=", .a)) {
+            # format: --key=value
+            .kv <- strsplit(sub("^--", "", .a), "=")[[1]]
+            .arglist[[.kv[1]]] <- .kv[2]
             .i <- .i + 1
+        } else {
+            # format: --key value
+            .key <- sub("^--", "", .a)
+            .i <- .i + 1
+            if (.i <= length(.args) && !grepl("^--", .args[.i])) {
+                .arglist[[.key]] <- .args[.i]
+                .i <- .i + 1
+            }
         }
+    } else {
+        .i <- .i + 1
     }
-    in.path       <- .arglist[["input-dir"]]
-    out.path      <- .arglist[["output-dir"]]
-    master.lookup <- .arglist[["master-lookup"]]
-    new.flu.name  <- .arglist[["new-flu"]]
-    old.flu.name  <- .arglist[["old-flu"]]
-} else {
-    # fallback defaults (standalone run)
-    in.path <- "Q:/Projects/2023_Baseyear/FLU_and_Lockouts"
-    out.path <- file.path(in.path, "imputation_data")
-    master.lookup <- file.path(in.path, "old_flu_crosswalk", "Full_FLU_Master_Corres_File_2026-06-03.xlsx")
-    new.flu.name  <- file.path(in.path, "FLU", "Zoning_2026_d3_06-24.xlsx")
-    old.flu.name  <- file.path(in.path, "old_flu", "final_flu_postprocessed_2023-01-10.csv")
+}
+in.path       <- .arglist[["input-dir"]]
+out.path      <- .arglist[["output-dir"]]
+master.lookup <- .arglist[["master-lookup"]]
+new.flu.name  <- .arglist[["new-flu"]]
+old.flu.name  <- .arglist[["old-flu"]]
+
+# ---- require all arguments to be supplied ----
+.required.args <- list("input-dir" = in.path, "output-dir" = out.path,
+                        "master-lookup" = master.lookup, "new-flu" = new.flu.name,
+                        "old-flu" = old.flu.name)
+.missing.args <- names(.required.args)[sapply(.required.args, is.null)]
+if (length(.missing.args) > 0) {
+    stop("Missing required argument(s): --", paste(.missing.args, collapse = ", --"))
 }
 
 # read new FLU and do some cleaning including removing duplicates
