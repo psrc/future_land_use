@@ -75,9 +75,6 @@ def _build_overlay_plan_types(parcels_to_update, f, OUTPUT, today):
         axis=1
     )
 
-    # replace -1 values in use columns with NaN for aggregation
-    overlay_plan_types_out[USE_COLS] = overlay_plan_types_out[USE_COLS].replace(-1, np.nan)
-
     # aggregate to get minimum values for each overlay_combo_id
     min_cols = USE_COLS + [
         'orig_juris_zn', 'MinDU_Res', 'MinFAR_Comm', 'MinFAR_Office', 'MinFAR_Indust', 'MinFAR_Mixed',
