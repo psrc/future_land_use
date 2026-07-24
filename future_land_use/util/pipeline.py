@@ -1,9 +1,11 @@
 import pandas as pd
+from pypyr.config import config
 import yaml
 from pathlib import Path
 import os
 import geopandas as gpd
 from shapely.wkt import loads
+import getpass
 
 
 class Pipeline:
@@ -13,6 +15,7 @@ class Pipeline:
         """
         self.settings_path = Path(settings_path).resolve()
         self.base_dir = self.settings_path.parent
+        self.user_onedrive = self._get_user_onedrive_path()
 
         with open(self.settings_path / 'settings.yaml', 'r') as file:
             self.settings = yaml.safe_load(file)
@@ -24,6 +27,21 @@ class Pipeline:
     def get_settings_path(self):
         # Returns the path to the settings directory
         return str(self.settings_path)
+    
+    def _get_user_onedrive_path(self):
+        user_name = getpass.getuser().lower()
+        if Path().joinpath("C:/Users/", user_name, "PSRC").exists():
+            return Path().joinpath("C:/Users/", user_name, "PSRC")
+        elif Path().joinpath("C:/Users/", user_name, "Puget Sound Regional Council").exists():
+            return Path().joinpath("C:/Users/", user_name, "Puget Sound Regional Council")
+        elif Path().joinpath("C:/Users/", user_name, "OneDrive - PSRC").exists():
+            return Path().joinpath("C:/Users/", user_name, "OneDrive - PSRC")
+        else:   
+            print ("OneDrive path not found")
+
+    def get_onedrive_path(self, *path_parts):
+        # Returns the path to the user's OneDrive directory
+        return self.user_onedrive.joinpath(*path_parts)
 
     def _resolve_workspace_path(self, configured_path, default_name):
         path = Path(configured_path or default_name)
