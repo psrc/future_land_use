@@ -42,7 +42,7 @@ def apply_manual_matches(gdf,flu_table,data_dir):
         gdf['juris_zn'] = np.where(gdf['juris_zn_manual_match'].notnull(), gdf['juris_zn_manual_match'], gdf['juris_zn'])
 
     # merge overlay layers with flu table, flag rows that don't have a match
-    gdf = gdf.merge(flu_table, on='juris_zn', how='left')
+    gdf = gdf.merge(flu_table, on=['juris','juris_zn'], how='left')
     gdf['match_flag'] = gdf['juris_zn'].isin(flu_table['juris_zn'])
     gdf_out = gdf.loc[(gdf['match_flag']==False),'juris_zn'].to_frame()
 
@@ -67,7 +67,9 @@ def apply_manual_matches(gdf,flu_table,data_dir):
     return gdf[['juris','juris_zn','match_flag','geometry']]
 
 def run_step(context):
+    print("Running step: combine_overlays...")
     p = Pipeline(settings_path=context['configs_dir'])
+    global_cfg = p.settings
     cfg = p.settings.get('overlay_settings', {})
     input_overlay_gdb = p.get_onedrive_path(cfg.get('overlay_gdb_path', ''))
 
@@ -83,7 +85,15 @@ def run_step(context):
     # apply manual matches to the gdf and save the manual match csv for review and editing
     # re-run the scripts after editing the manual match file to apply the manual matches
     gdf = apply_manual_matches(gdf,df,p.get_data_path())
-    print(len(gdf[gdf['match_flag']==False]), "rows in the overlay layers that don't have a match in the flu table after applying manual matches")
+    unmatched = gdf[gdf['match_flag'] == False]
+    n_unmatched = len(unmatched)
+    if n_unmatched > 0:
+        raise RuntimeError(
+            f"{n_unmatched} overlay zone(s) still have no match in the FLU table "
+            f"after applying manual matches:\n"
+            + unmatched[['juris', 'juris_zn']].to_string(index=False)
+            + "\nEdit the manual match CSV and re-run to resolve."
+        )
 
     # save gdf to pipeline for use in future steps
     p.save_geodataframe(gdf,'overlays_merged')
@@ -97,3 +107,4 @@ def run_step(context):
     if cfg.get('write_final_overlays_to_input_gdb', False):
         today = pd.Timestamp.now().strftime('%Y_%m%d')
         gdf.to_file(input_overlay_gdb, driver='OpenFileGDB', layer=f"{cfg.get('final_overlay_layer_name', 'overlays_combined')}_{today}", promote_to_multi=True)
+    return context

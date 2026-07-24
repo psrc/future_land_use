@@ -12,4 +12,4 @@ FLU creation pipeline.
 
 4. Run the pipeline using -c "<configs_dir>" cmd line arg
     
-    `uv run control_totals\run.py -c projects\summer_2026\configs`
+    `uv run future_land_use\run.py -c projects\summer_2026\configs`
