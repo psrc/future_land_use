@@ -187,11 +187,16 @@ for (i in 1:length(cols.sets)) {
   newcolnm.ht <- ht.col
   newcolnm_tag.ht <- paste0(ht.col, "_src")
 
-  # for missing lot coverage values, use its median (separate for rural and not rural)
+  # for missing lot coverage values, use its median 
+  # (derived separately for rural, non-rural mixed and non-rural non-mixed)
   med_lc_rural <- flu[get(use.col) == TRUE & !is.na(get(lc.col)) & get(lc.col) > 0 & rural == TRUE, median(get(lc.col))]
-  med_lc_notrural <- flu[get(use.col) == TRUE & !is.na(get(lc.col)) & get(lc.col) > 0 & rural == FALSE, median(get(lc.col))]
+  med_lc_notrural_mixed <- flu[get(use.col) == TRUE & !is.na(get(lc.col)) & get(lc.col) > 0 & rural == FALSE & Mixed_Use == TRUE, median(get(lc.col))]
+  med_lc_notrural_notmixed <- flu[get(use.col) == TRUE & !is.na(get(lc.col)) & get(lc.col) > 0 & rural == FALSE & Mixed_Use == FALSE, median(get(lc.col))]
+  
   flu[get(use.col) == TRUE & (is.na(get(lc.col)) | get(lc.col) == 0) & rural == TRUE, (lc.col) := med_lc_rural]
-  flu[get(use.col) == TRUE & (is.na(get(lc.col)) | get(lc.col) == 0) & rural == FALSE, (lc.col) := med_lc_notrural]
+  flu[get(use.col) == TRUE & (is.na(get(lc.col)) | get(lc.col) == 0) & rural == FALSE & Mixed_Use == TRUE, (lc.col) := med_lc_notrural_mixed]
+  if(use.col != "Mixed_Use")
+    flu[get(use.col) == TRUE & (is.na(get(lc.col)) | get(lc.col) == 0) & rural == FALSE & Mixed_Use == FALSE, (lc.col) := med_lc_notrural_notmixed]
   
   # impute FAR via
   # FAR = height * lot_coverage / floor_height
