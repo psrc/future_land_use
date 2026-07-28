@@ -218,8 +218,15 @@ def run_step(context):
     mixed  = _unroll_far_or_dua(f, 'Mixed_Use', 6, 'far',
                                 'MinFAR_Mixed', 'MaxFAR_Mixed',
                                 'LC_Mixed', 'MaxHt_Mixed')
-    mixed_du = _unroll_far_or_dua(f, 'Mixed_Use', 6, 'units_per_acre',
-                                  'MinDU_Res', 'MaxDU_Res',
+    # use MinDU_Mixed/MaxDU_Mixed when both are populated; otherwise fall
+    # back to MinDU_Res/MaxDU_Res
+    mixed_du_fallback = f['MinDU_Mixed'].isna() | f['MaxDU_Mixed'].isna()
+    f_mixed_du = f.assign(
+        MinDU_Mixed_eff=np.where(mixed_du_fallback, f['MinDU_Res'], f['MinDU_Mixed']),
+        MaxDU_Mixed_eff=np.where(mixed_du_fallback, f['MaxDU_Res'], f['MaxDU_Mixed']),
+    )
+    mixed_du = _unroll_far_or_dua(f_mixed_du, 'Mixed_Use', 6, 'units_per_acre',
+                                  'MinDU_Mixed_eff', 'MaxDU_Mixed_eff',
                                   'LC_Mixed', 'MaxHt_Mixed')
 
     sf_du_lot = _unroll_du_lot(f, 'FloorMaxDU_lot', 1, 2, 'LC_Res', 'MaxHt_Res', 2)

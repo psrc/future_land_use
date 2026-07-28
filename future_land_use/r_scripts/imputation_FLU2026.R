@@ -66,7 +66,9 @@ if (length(.missing.args) > 0) {
 }
 
 # read new FLU and do some cleaning including removing duplicates
-source("load_FLU2026.R")
+# interactive mode setwd()'s into r_scripts/ above; the pipeline runs this
+# script with the working directory set to r_scripts/'s parent instead
+source(if (interactive()) "load_FLU2026.R" else "r_scripts/load_FLU2026.R")
 
 # read old FLU
 ofluall <- fread(old.flu.name)
@@ -531,7 +533,7 @@ colnames(flu.fin.prep) <- str_trim(str_replace_all(colnames(flu.fin.prep), "_new
 
 # remove duplicate rows (in preparation for assigning plan_type_ids in unroll_constraints.py)
 gb.cols <- setdiff(colnames(flu.fin.prep), c("Bonus_avail", "MinDU_Comm", "MinDU_Office",
-                                             "MinDU_Indust", "MinDU_Mixed", "MinFAR_Res", "MaxDU_Mixed"))
+                                             "MinDU_Indust", "MinFAR_Res"))
 # order the columns the way they should be in the output file
 ordered.cols <- c("FLU_master_id", id.cols, "Bonus_included", use.cols, "FloorMaxDU_lot", 
                   min.cols, max.cols, maxht.cols, lc.cols, "rural")

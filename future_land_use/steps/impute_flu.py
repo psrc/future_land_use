@@ -85,7 +85,7 @@ def run_step(context):
         subprocess.run(cmd, check=True, cwd=r_script_parent_dir)
         print("R script executed successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"Error occurred while running the R script: {e}")
+        raise RuntimeError(f"R script failed while running the R script: {e}") from e
 
     # imputed flu
     ROOT = global_cfg['root_dir']
