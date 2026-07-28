@@ -43,28 +43,27 @@ master.lookup <- .arglist[["master-lookup"]]
 new.flu.name  <- .arglist[["new-flu"]]
 old.flu.name  <- .arglist[["old-flu"]]
 
-# ---- require all arguments to be supplied ----
-.required.args <- list("input-dir" = in.path, "output-dir" = out.path,
-                        "master-lookup" = master.lookup, "new-flu" = new.flu.name,
-                        "old-flu" = old.flu.name)
-.missing.args <- names(.required.args)[sapply(.required.args, is.null)]
-if (length(.missing.args) > 0) {
-    stop("Missing required argument(s): --", paste(.missing.args, collapse = ", --"))
+# ---- FOR MANUAL/INTERACTIVE RUNS ONLY ----
+# When run interactively (e.g. in RStudio), use local defaults so command-line
+# args are not required. This intentionally overrides parsed args.
+if (interactive()) {
+  root <- "Q:/Projects/2023_Baseyear/FLU_and_Lockouts"
+  in.path       <- root
+  out.path      <- file.path(root, "imputation_data")
+  master.lookup <- file.path(root, "old_flu_crosswalk/Full_FLU_Master_Corres_File_2026-06-03.xlsx")
+  new.flu.name  <- "Q:/Projects/2023_Baseyear/FLU_and_Lockouts/FLU/Zoning_2026_d3_07-27.xlsx"
+  old.flu.name  <- file.path(root, "old_flu/final_flu_postprocessed_2023-01-10.csv")
+  setwd("future_land_use/r_scripts") # so that source("load_FLU2026.R") resolves
 }
 
-# ---- FOR MANUAL/INTERACTIVE RUNS ONLY ----
-# When the pipeline runs this script, it is invoked as a subprocess with the
-# command-line arguments parsed above. To run this script directly (e.g. in
-# RStudio) without supplying those arguments, uncomment the block below and
-# hardcode the paths as needed. This overrides the values parsed above.
-# root <- "Q:/Projects/2023_Baseyear/FLU_and_Lockouts"
-# in.path       <- root
-# out.path      <- file.path(root, "imputation_data")
-# master.lookup <- file.path(root, "old_flu_crosswalk/Full_FLU_Master_Corres_File_2026-06-03.xlsx")
-# new.flu.name  <- "Q:/Projects/2023_Baseyear/FLU_and_Lockouts/FLU/Zoning_2026_d3_07-27.xlsx"
-# old.flu.name  <- file.path(root, "old_flu/final_flu_postprocessed_2023-01-10.csv")
-# setwd("future_land_use/r_scripts") # so that source("load_FLU2026.R") resolves
-# ---- END MANUAL/INTERACTIVE RUN BLOCK ----
+# ---- require all arguments to be supplied (pipeline/non-interactive) ----
+.required.args <- list("input-dir" = in.path, "output-dir" = out.path,
+            "master-lookup" = master.lookup, "new-flu" = new.flu.name,
+            "old-flu" = old.flu.name)
+.missing.args <- names(.required.args)[sapply(.required.args, is.null)]
+if (length(.missing.args) > 0) {
+  stop("Missing required argument(s): --", paste(.missing.args, collapse = ", --"))
+}
 
 # read new FLU and do some cleaning including removing duplicates
 source("load_FLU2026.R")

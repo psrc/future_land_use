@@ -78,10 +78,11 @@ def run_step(context):
         '--old-flu', old_flu,
     ]
 
-    # Run the R script from its own directory so that source("load_FLU2026.R") resolves
-    r_script_dir = os.path.dirname(r_script_path)
+    # Run the R script from the parent of its directory so that
+    # source("r_scripts/load_FLU2026.R") resolves
+    r_script_parent_dir = os.path.dirname(os.path.dirname(r_script_path))
     try:
-        subprocess.run(cmd, check=True, cwd=r_script_dir)
+        subprocess.run(cmd, check=True, cwd=r_script_parent_dir)
         print("R script executed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Error occurred while running the R script: {e}")
