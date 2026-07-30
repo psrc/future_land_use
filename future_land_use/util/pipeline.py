@@ -28,16 +28,20 @@ class Pipeline:
         # Returns the path to the settings directory
         return str(self.settings_path)
     
-    def _get_user_onedrive_path(self):
-        user_name = getpass.getuser().lower()
-        if Path().joinpath("C:/Users/", user_name, "PSRC").exists():
-            return Path().joinpath("C:/Users/", user_name, "PSRC")
-        elif Path().joinpath("C:/Users/", user_name, "Puget Sound Regional Council").exists():
-            return Path().joinpath("C:/Users/", user_name, "Puget Sound Regional Council")
-        elif Path().joinpath("C:/Users/", user_name, "OneDrive - PSRC").exists():
-            return Path().joinpath("C:/Users/", user_name, "OneDrive - PSRC")
-        else:   
-            print ("OneDrive path not found")
+    def _get_user_onedrive_path(self) -> Path:
+        user_name = getpass.getuser()
+        candidates = [
+            Path('C:/Users') / user_name / 'PSRC',
+            Path('C:/Users') / user_name / 'Puget Sound Regional Council',
+            Path('C:/Users') / user_name / 'OneDrive - PSRC',
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        raise FileNotFoundError(
+            f"OneDrive/PSRC directory not found under C:/Users/{user_name}. "
+            "Expected one of: PSRC, Puget Sound Regional Council, OneDrive - PSRC."
+        )
 
     def get_onedrive_path(self, *path_parts):
         # Returns the path to the user's OneDrive directory
