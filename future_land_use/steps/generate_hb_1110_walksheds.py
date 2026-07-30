@@ -222,9 +222,6 @@ def generate_walksheds(
 if __name__ == "__main__":
     import arcpy
     print("Running step: generate_hb_1110_walksheds...")
-    #configs_dir = sys.argv[1]  # Expecting a single argument: path to the configs dir
-    #p = Pipeline(settings_path=configs_dir)
-    #cfg = p.settings['hb1110_settings']
     generate_walksheds(
         network_dataset_path=sys.argv[1],
         station_fc_path=sys.argv[2],

@@ -15,7 +15,7 @@ elmer_geo_layers: # elmer geo layers to download
 root_dir: Q:/Projects/2023_Baseyear/FLU_and_Lockouts
 
 # path to FLU table
-flu_table_path: C:/Users/JKolberg/OneDrive - PSRC/GIS - Sharing/Projects/FLU/Zoning_2026_d3.xlsx
+flu_table_path: GIS - Sharing/Projects/FLU/Zoning_2026_d3.xlsx
 flu_table_sheet: Sheet1 # sheet name in the flu table
 flu_table_rename_cols:
   Juris: juris
@@ -133,7 +133,7 @@ unroll_constraints_settings:
 # Pipeline steps
 #---------------------------------------------------------------------------------------------------
 steps: # pypyr pipeline steps to run
-  - future_land_use.steps.run_walksheds
+ # - future_land_use.steps.run_walksheds
   - future_land_use.steps.load_data
   - future_land_use.steps.get_elmer_data
   - future_land_use.steps.combine_overlays
