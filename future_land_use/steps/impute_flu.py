@@ -51,7 +51,8 @@ def run_step(context):
     input_dir = global_cfg.get('root_dir', '')
     output_dir = cfg.get('output_dir', '')
     old_flu_crosswalk = cfg.get('old_flu_crosswalk', '')
-    new_flu = global_cfg.get('flu_table_path', '')
+    onedrive_path = p.get_onedrive_path()
+    new_flu_path = os.path.join(onedrive_path, global_cfg.get('flu_table_path', ''))
     old_flu = cfg.get('old_flu', '')
 
     # Resolve paths relative to the project root if they are not absolute
@@ -64,7 +65,7 @@ def run_step(context):
     input_dir = _resolve(input_dir)
     output_dir = _resolve(output_dir) if os.path.isabs(output_dir) else os.path.join(input_dir, output_dir)
     old_flu_crosswalk = old_flu_crosswalk if os.path.isabs(old_flu_crosswalk) else os.path.join(input_dir, old_flu_crosswalk)
-    new_flu = new_flu if os.path.isabs(new_flu) else os.path.join(input_dir, new_flu)
+    new_flu = new_flu_path if os.path.isabs(new_flu_path) else os.path.join(input_dir, new_flu_path)
     old_flu = old_flu if os.path.isabs(old_flu) else os.path.join(input_dir, old_flu)
 
     # Build command-line arguments for the R script

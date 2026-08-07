@@ -31,12 +31,15 @@ def _validate_juris_in_hb(f, hb_cities):
         )
 
 
-def _apply_base_hb_density_rules(f, hb_cities):
-    """Merge HB tier info into f and apply minimum density rules for tiers 1-3."""
-    du_lot_col = 'FloorMaxDU_lot'
+def _merge_hb_tier_info(f, hb_cities):
+    """Merge HB tier info into f so hb_1110_tier is available regardless of override settings."""
     print("Applying HB 1110 rules...")
-    f = f.merge(hb_cities, left_on='Juris', right_on='city_name', how='left')
+    return f.merge(hb_cities, left_on='Juris', right_on='city_name', how='left')
 
+
+def _apply_base_hb_density_rules(f):
+    """Apply minimum density rules for tiers 1-3."""
+    du_lot_col = 'FloorMaxDU_lot'
     print("Applying minimum density rules for HB 1110 tiers...")
     f = _apply_min_du_lot(f, [1], (f['Res_Use'] == 1) | (f['Mixed_Use'] == 1), 4, du_lot_col)
     f = _apply_min_du_lot(f, [2, 3], (f['Res_Use'] == 1) | (f['Mixed_Use'] == 1), 2, du_lot_col)
@@ -90,7 +93,7 @@ def _apply_hb_transit_rules(f, hb_parcels):
 def run_step(context):
     print("Running step: apply_hb_1110_to_flu...")
     p = Pipeline(settings_path=context['configs_dir'])
-
+    cfg = p.settings['hb1110_settings']
     f = p.get_table('flu_imputed')
 
     print("Reading in HB1110 parcels...")
@@ -98,8 +101,10 @@ def run_step(context):
 
     hb_cities = _build_hb_cities(hb_parcels)
     _validate_juris_in_hb(f, hb_cities)
-    f = _apply_base_hb_density_rules(f, hb_cities)
+    f = _merge_hb_tier_info(f, hb_cities)
+    if cfg['override_du_lot_floor_max']:
+        print("Overriding du_lot_floor_max values for HB 1110 tiers...")
+        f = _apply_base_hb_density_rules(f)
     f = _apply_hb_transit_rules(f, hb_parcels)
-
     p.save_table(f, 'flu_imputed_hb_1110')
     return context

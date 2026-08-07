@@ -115,6 +115,115 @@ def _unroll_residential(f):
 
 
 # ---------------------------------------------------------------------------
+# helper: du/lot vs du/acre capacity check
+# ---------------------------------------------------------------------------
+UNLIMITED = -1  # sentinel written by load_FLU2026.R for "unlimited" max density
+
+# max column each use flag activates in the unrolled constraints
+USE_MAX_COLS = {
+    'Office_Use': 'MaxFAR_Office',
+    'Comm_Use': 'MaxFAR_Comm',
+    'Indust_Use': 'MaxFAR_Indust',
+    'Mixed_Use': 'MaxFAR_Mixed',
+}
+
+
+def _as_capacity(s):
+    """Numeric view of a max-density column with the 'unlimited' sentinel mapped to inf."""
+    s = pd.to_numeric(s, errors='coerce')
+    return s.mask(s == UNLIMITED, np.inf)
+
+
+def _has_capacity(s):
+    """True where a max column is populated and nonzero (unlimited counts as capacity)."""
+    c = _as_capacity(s)
+    return c.notna() & (c > 0)
+
+
+def _effective_mixed_du(f):
+    """Mixed-use min/max DU, falling back to the residential values when either is missing."""
+    fallback = f['MinDU_Mixed'].isna() | f['MaxDU_Mixed'].isna()
+    return (
+        pd.Series(np.where(fallback, f['MinDU_Res'], f['MinDU_Mixed']), index=f.index),
+        pd.Series(np.where(fallback, f['MaxDU_Res'], f['MaxDU_Mixed']), index=f.index),
+    )
+
+
+def _du_lot_only_constraint(f):
+    """True where du/lot is the only nonzero max constraint the row's use flags activate."""
+    _, max_mixed_du = _effective_mixed_du(f)
+    other = (f['Res_Use'] == 1) & _has_capacity(f['MaxDU_Res'])
+    other = other | ((f['Mixed_Use'] == 1) & _has_capacity(max_mixed_du))
+    for use_col, max_col in USE_MAX_COLS.items():
+        other = other | ((f[use_col] == 1) & _has_capacity(f[max_col]))
+    return ~other
+
+
+def _check_du_lot_vs_dua(f, all_df, pin_name, qc_dir, today):
+    """Null out FloorMaxDU_lot for plan types whose du/lot capacity never exceeds their
+    du/acre capacity on any parcel, so `_unroll_du_lot` skips them.  Returns a copy of *f*."""
+    du_lot = _as_capacity(f['FloorMaxDU_lot'])
+    _, max_mixed_du = _effective_mixed_du(f)
+    dua = pd.concat([
+        _as_capacity(f['MaxDU_Res']),
+        _as_capacity(max_mixed_du).where(f['Mixed_Use'] == 1),
+    ], axis=1).max(axis=1)
+
+    qc = f.loc[
+        (f['Res_Use'] == 1) & du_lot.notna() & (du_lot > 0),
+        ['plan_type_id', 'juris_zn', 'Juris', 'MaxDU_Res', 'FloorMaxDU_lot'],
+    ].copy()
+    qc['du_lot_capacity'] = du_lot
+    qc['dua_capacity'] = dua
+    qc['exempt_only_constraint'] = _du_lot_only_constraint(f)
+
+    parcels = all_df.loc[
+        all_df['plan_type_id'].notna()
+        & (all_df['plan_type_id'] < 9000)
+        & (all_df['gross_sqft'] > 0),
+        [pin_name, 'plan_type_id', 'gross_sqft'],
+    ].merge(qc[['plan_type_id', 'du_lot_capacity', 'dua_capacity']], on='plan_type_id')
+
+    dua_units = (parcels['dua_capacity'] * (parcels['gross_sqft'] / 43560)).round(0)
+    parcels['du_lot_greater'] = parcels['du_lot_capacity'].round(0) > dua_units
+
+    counts = parcels.groupby('plan_type_id').agg(
+        n_parcels=('du_lot_greater', 'size'),
+        n_du_lot_greater=('du_lot_greater', 'sum'),
+    ).reset_index()
+
+    qc = qc.merge(counts, on='plan_type_id', how='left')
+    qc[['n_parcels', 'n_du_lot_greater']] = qc[['n_parcels', 'n_du_lot_greater']].fillna(0).astype(int)
+    qc['pct_du_lot_greater'] = np.where(
+        qc['n_parcels'] > 0, qc['n_du_lot_greater'] / qc['n_parcels'], np.nan
+    )
+    # a plan type with no du/acre capacity at all can never be beaten by it, so keep du/lot
+    qc['no_dua'] = qc['dua_capacity'].isna()
+    qc['du_lot_dropped'] = (
+        (qc['n_du_lot_greater'] == 0) & ~qc['exempt_only_constraint'] & ~qc['no_dua']
+    ).astype(int)
+
+    f_du_lot = f.copy()
+    f_du_lot.loc[
+        f_du_lot['plan_type_id'].isin(qc.loc[qc['du_lot_dropped'] == 1, 'plan_type_id']),
+        'FloorMaxDU_lot',
+    ] = np.nan
+
+    qc = qc[[
+        'plan_type_id', 'juris_zn', 'Juris', 'MaxDU_Res', 'FloorMaxDU_lot',
+        'dua_capacity', 'du_lot_capacity', 'n_parcels', 'n_du_lot_greater',
+        'pct_du_lot_greater', 'exempt_only_constraint', 'no_dua', 'du_lot_dropped',
+    ]]
+    qc.to_csv(os.path.join(qc_dir, 'du_lot_vs_dua_check_' + str(today) + '.csv'), index=False)
+
+    print(f"Plan types with du/lot constraints: {len(qc)}")
+    print(f"  never exceed du/acre on any parcel, du/lot dropped: {int(qc['du_lot_dropped'].sum())}")
+    print(f"  kept because du/lot is their only constraint:       {int(qc['exempt_only_constraint'].sum())}")
+    print(f"  kept because they have no du/acre capacity:         {int(qc['no_dua'].sum())}")
+    return f_du_lot
+
+
+# ---------------------------------------------------------------------------
 # helper: lockout plan_type_id assignment
 # ---------------------------------------------------------------------------
 _LU_TYPE_LOCKOUT_MAP = {
@@ -187,6 +296,8 @@ def run_step(context):
     global_cfg = p.settings
     ROOT = global_cfg['root_dir']
     OUTPUT = os.path.join(ROOT, "unroll_constraints")
+    flu_qc_dir = os.path.join(OUTPUT, "flu_qc")
+    os.makedirs(flu_qc_dir, exist_ok=True)
     today = pd.to_datetime("today").date()
     pin_name = cfg['parcel_id_col']
 
@@ -204,6 +315,12 @@ def run_step(context):
     for lc_col in LC_COLS:
         f[lc_col] = f[lc_col] / 100
 
+    # ---- drop du/lot constraints that can never bind ----
+    if cfg.get('drop_unused_du_lot', False):
+        f_du_lot = _check_du_lot_vs_dua(f, all_df, pin_name, flu_qc_dir, today)
+    else:
+        f_du_lot = f
+
     # ---- unroll constraints ----
     sf, mf = _unroll_residential(f)
     off    = _unroll_far_or_dua(f, 'Office_Use', 3, 'far',
@@ -220,17 +337,17 @@ def run_step(context):
                                 'LC_Mixed', 'MaxHt_Mixed')
     # use MinDU_Mixed/MaxDU_Mixed when both are populated; otherwise fall
     # back to MinDU_Res/MaxDU_Res
-    mixed_du_fallback = f['MinDU_Mixed'].isna() | f['MaxDU_Mixed'].isna()
+    min_mixed_du, max_mixed_du = _effective_mixed_du(f)
     f_mixed_du = f.assign(
-        MinDU_Mixed_eff=np.where(mixed_du_fallback, f['MinDU_Res'], f['MinDU_Mixed']),
-        MaxDU_Mixed_eff=np.where(mixed_du_fallback, f['MaxDU_Res'], f['MaxDU_Mixed']),
+        MinDU_Mixed_eff=min_mixed_du,
+        MaxDU_Mixed_eff=max_mixed_du,
     )
     mixed_du = _unroll_far_or_dua(f_mixed_du, 'Mixed_Use', 6, 'units_per_acre',
                                   'MinDU_Mixed_eff', 'MaxDU_Mixed_eff',
                                   'LC_Mixed', 'MaxHt_Mixed')
 
-    sf_du_lot = _unroll_du_lot(f, 'FloorMaxDU_lot', 1, 2, 'LC_Res', 'MaxHt_Res', 2)
-    mf_du_lot = _unroll_du_lot(f, 'FloorMaxDU_lot', 2, 3, 'LC_Res', 'MaxHt_Res', 9999)
+    sf_du_lot = _unroll_du_lot(f_du_lot, 'FloorMaxDU_lot', 1, 2, 'LC_Res', 'MaxHt_Res', 2)
+    mf_du_lot = _unroll_du_lot(f_du_lot, 'FloorMaxDU_lot', 2, 3, 'LC_Res', 'MaxHt_Res', 9999)
 
     # ---- combine ----
     lockout_id = 9999

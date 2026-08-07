@@ -53,7 +53,7 @@ old_flu_crosswalk_settings:
 #---------------------------------------------------------------------------------------------------
 imputation_settings:
   # Path to the R executable (e.g. Rscript.exe on Windows)
-  r_executable_path: C:/Program Files/R/R-4.5.2/bin/Rscript.exe
+  r_executable_path: C:/Users/jkolberg/AppData/Local/Programs/R/R-4.6.1/bin/Rscript.exe
   # Path to the imputation R script, relative to the project root
   r_script_path: future_land_use/r_scripts/imputation_FLU2026.R
   # Output directory, relative to root_dir above or absolute
@@ -118,6 +118,7 @@ hb1110_settings:
   output_cities_walkshed: False
   # name of the hb1110 cities and walkshed output layer, must be set if output_cities_walkshed is True
   output_cities_walkshed_name: hb_1110_cities_walkshed # will be saved in output dir in hb_1110_cities_walkshed.gdb
+  override_du_lot_floor_max: False # if True, override the du_lot_floor_max value with 4 for tiers 1 and 2 for tiers 2 and 3, otherwise use the du_lot_floor_max value from the input FLU table
 
 #------------------------------------------------------------------------------------------------
 # Unroll constraints settings
@@ -127,6 +128,7 @@ unroll_constraints_settings:
   base_year_cache: L:/base_year_2023_inputs/JobParcel/base_year_data/2023/parcels # urbansim baseyear cache
   parcel_id_col: parcel_id
   apply_hb_1110: True # if True, apply HB 1110 rules to imputed FLU data, otherwise use original imputed FLU data without HB 1110 rules applied
+  drop_unused_du_lot: True # if True, drop units_per_lot constraints for plan types where no parcel has du/lot capacity exceeding du/acre capacity
 
 
 #---------------------------------------------------------------------------------------------------
@@ -134,13 +136,13 @@ unroll_constraints_settings:
 #---------------------------------------------------------------------------------------------------
 steps: # pypyr pipeline steps to run
  # - future_land_use.steps.run_walksheds
-  - future_land_use.steps.load_data
-  - future_land_use.steps.get_elmer_data
-  - future_land_use.steps.combine_overlays
-  - future_land_use.steps.flag_overlay_parcels
-  - future_land_use.steps.flag_hb_1110_parcels
-  - future_land_use.steps.create_old_flu_crosswalk
-  - future_land_use.steps.impute_flu 
+  # - future_land_use.steps.load_data
+  # - future_land_use.steps.get_elmer_data
+  # - future_land_use.steps.combine_overlays
+  # - future_land_use.steps.flag_overlay_parcels
+  # - future_land_use.steps.flag_hb_1110_parcels
+  # - future_land_use.steps.create_old_flu_crosswalk
+  # - future_land_use.steps.impute_flu 
   - future_land_use.steps.apply_hb_1110_to_flu
   - future_land_use.steps.parcel_flu_spatial_join
   - future_land_use.steps.apply_overlays
