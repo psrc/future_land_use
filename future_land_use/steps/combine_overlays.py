@@ -71,10 +71,13 @@ def run_step(context):
     p = Pipeline(settings_path=context['configs_dir'])
     global_cfg = p.settings
     cfg = p.settings.get('overlay_settings', {})
-    input_overlay_gdb = cfg.get('overlay_gdb_path', '')
+    input_overlay_gdb = p.get_onedrive_path(cfg.get('overlay_gdb_path', ''))
 
     # load flu table
-    df = p.get_table('flu_table')
+    flu_table_path = p.get_onedrive_path(cfg.get('flu_table_path', ''))
+    flu_juris_zn_col = cfg.get('flu_juris_zn_col', '')
+    df = pd.read_excel(flu_table_path)
+    df['juris_zn'] = df[flu_juris_zn_col]
 
     # load overlay gis layers
     gdf = load_overlay_layers(input_overlay_gdb, cfg.get('overlay_layers', []))

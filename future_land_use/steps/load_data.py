@@ -75,7 +75,7 @@ def run_step(context):
     old_flu_cfg = p.settings.get('old_flu_crosswalk_settings', {})
     ROOT = global_cfg['root_dir']
     
-    FLU_TABLE_PATH = global_cfg['flu_table_path']
+    FLU_TABLE_PATH = p.get_onedrive_path(global_cfg['flu_table_path'])
     FLU_TABLE_SHEET = global_cfg['flu_table_sheet']
 
     # flu gis layer
