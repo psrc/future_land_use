@@ -141,12 +141,16 @@ def _has_capacity(s):
 
 
 def _effective_mixed_du(f):
-    """Mixed-use min/max DU, falling back to the residential values when either is missing."""
-    fallback = f['MinDU_Mixed'].isna() | f['MaxDU_Mixed'].isna()
-    return (
-        pd.Series(np.where(fallback, f['MinDU_Res'], f['MinDU_Mixed']), index=f.index),
-        pd.Series(np.where(fallback, f['MaxDU_Res'], f['MaxDU_Mixed']), index=f.index),
-    )
+    """Mixed-use min/max DU, falling back to the residential values when either is missing
+    and the plan type actually has residential use.  Mixed-use plan types with no
+    residential component (Res_Use != 1) and no Mixed DU values get NaN, i.e. no
+    residential capacity, rather than picking up stray MinDU_Res/MaxDU_Res values."""
+    missing_mixed = f['MinDU_Mixed'].isna() | f['MaxDU_Mixed'].isna()
+    fallback = missing_mixed & (f['Res_Use'] == 1)
+    min_du = pd.Series(np.where(fallback, f['MinDU_Res'], f['MinDU_Mixed']), index=f.index)
+    max_du = pd.Series(np.where(fallback, f['MaxDU_Res'], f['MaxDU_Mixed']), index=f.index)
+    no_capacity = missing_mixed & (f['Res_Use'] != 1)
+    return min_du.mask(no_capacity), max_du.mask(no_capacity)
 
 
 def _du_lot_only_constraint(f):
@@ -336,11 +340,12 @@ def run_step(context):
                                 'MinFAR_Mixed', 'MaxFAR_Mixed',
                                 'LC_Mixed', 'MaxHt_Mixed')
     # use MinDU_Mixed/MaxDU_Mixed when both are populated; otherwise fall
-    # back to MinDU_Res/MaxDU_Res
+    # back to MinDU_Res/MaxDU_Res, but only for plan types with Res_Use == 1
     min_mixed_du, max_mixed_du = _effective_mixed_du(f)
-    f_mixed_du = f.assign(
-        MinDU_Mixed_eff=min_mixed_du,
-        MaxDU_Mixed_eff=max_mixed_du,
+    has_mixed_du = min_mixed_du.notna() | max_mixed_du.notna()
+    f_mixed_du = f.loc[has_mixed_du].assign(
+        MinDU_Mixed_eff=min_mixed_du.loc[has_mixed_du],
+        MaxDU_Mixed_eff=max_mixed_du.loc[has_mixed_du],
     )
     mixed_du = _unroll_far_or_dua(f_mixed_du, 'Mixed_Use', 6, 'units_per_acre',
                                   'MinDU_Mixed_eff', 'MaxDU_Mixed_eff',

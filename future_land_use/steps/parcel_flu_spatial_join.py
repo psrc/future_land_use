@@ -76,29 +76,22 @@ def _load_parcels_with_land_use(p, pin_name):
 
 
 def _spatial_join_parcels_to_flu(prcls, flu):
-    """Left sjoin parcels → flu; fall back to sjoin_nearest for unmatched; flag no_flu_match."""
+    """Left sjoin parcels → flu; unmatched parcels are kept without a FLU match, flagged
+    via no_flu_match, and will later be assigned plan_type_id 9999."""
     print("Spatially joining parcels to FLU shapefile...")
     prcls_flu = gpd.sjoin(prcls, flu, how='left')
 
-    unmatched = prcls_flu.loc[
-        prcls_flu['juris_zn'].isna(),
-        ['parcel_id', 'geometry', 'lu_type', 'tod_id', 'gross_sqft']
-    ].copy()
-
-    prct_unmatched = len(unmatched) / len(prcls)
-    print(f"Number of parcels with no spatial match to FLU shp: {len(unmatched)} "
+    n_unmatched = prcls_flu['juris_zn'].isna().sum()
+    prct_unmatched = n_unmatched / len(prcls)
+    print(f"Number of parcels with no spatial match to FLU shp: {n_unmatched} "
           f"out of {len(prcls)} total parcels ({prct_unmatched:.1%}). "
-          f"Unmatched parcels will be joined to nearest FLU polygon.")
+          f"Unmatched parcels will be left without a FLU match.")
 
     if prct_unmatched > 0.05:
         raise RuntimeError(
-            f"Warning: {len(unmatched)} parcels have no spatial match to FLU shapefile, "
+            f"Warning: {n_unmatched} parcels have no spatial match to FLU shapefile, "
             f"which is more than 5% of total parcels. Check data and spatial join parameters."
         )
-
-    unmatched_flu = gpd.sjoin_nearest(unmatched, flu)
-    prcls_flu = prcls_flu.loc[~prcls_flu['juris_zn'].isna()].copy()
-    prcls_flu = pd.concat([prcls_flu, unmatched_flu], ignore_index=True)
 
     prcls_flu['no_flu_match'] = 0
     prcls_flu.loc[prcls_flu['plan_type_id'].isna(), 'no_flu_match'] = 1
