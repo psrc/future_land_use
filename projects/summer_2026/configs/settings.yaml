@@ -26,6 +26,9 @@ flu_shp: GIS/FLU_2025/FLU_20260522/QC/FLU2025_final.shp # path relative to root_
 flu_shp_rename_cols:
   Juris_zn: juris_zn
 
+# output gdb path to save a FLU spatial layer
+flu_spatial_layer_output: GIS - Sharing/Projects/FLU/Imputed_FLU.gdb
+
 
 #---------------------------------------------------------------------------------------------------
 # old flu crosswalk settings
@@ -136,15 +139,15 @@ unroll_constraints_settings:
 #---------------------------------------------------------------------------------------------------
 steps: # pypyr pipeline steps to run
   # - future_land_use.steps.run_walksheds
-  - future_land_use.steps.load_data
+  # - future_land_use.steps.load_data
   # - future_land_use.steps.get_elmer_data
   # - future_land_use.steps.combine_overlays
   # - future_land_use.steps.flag_overlay_parcels
   # - future_land_use.steps.flag_hb_1110_parcels
   # - future_land_use.steps.create_old_flu_crosswalk
-  - future_land_use.steps.impute_flu
-  - future_land_use.steps.apply_hb_1110_to_flu
+  # - future_land_use.steps.impute_flu
+  # - future_land_use.steps.apply_hb_1110_to_flu
   - future_land_use.steps.parcel_flu_spatial_join
-  - future_land_use.steps.apply_overlays
-  - future_land_use.steps.apply_hb_1110_to_parcels
-  - future_land_use.steps.unroll_constraints
+  # - future_land_use.steps.apply_overlays
+  # - future_land_use.steps.apply_hb_1110_to_parcels
+  # - future_land_use.steps.unroll_constraints

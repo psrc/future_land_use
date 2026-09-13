@@ -173,6 +173,7 @@ def run_step(context):
     global_cfg = p.settings
     ROOT = global_cfg['root_dir']
     OUTPUT = os.path.join(ROOT, "unroll_constraints")
+    today = pd.Timestamp.today().strftime("%Y-%m-%d")
 
     pin_name = cfg['parcel_id_col']
 
@@ -195,3 +196,10 @@ def run_step(context):
     # -- save output
     df_out = all_df[[pin_name, 'juris_zn', 'plan_type_id']]
     p.save_table(df_out, 'parcel_plan_type_xwalk')
+
+    # -- export FLU spatial layer to one drive
+    if global_cfg['flu_spatial_layer_output']:
+        onedrive_path = p.get_onedrive_path()
+        export_gdb = global_cfg['flu_spatial_layer_output']
+        export_gdb_path = os.path.join(onedrive_path, export_gdb)
+        flu.to_file(export_gdb_path,layer=f'imputed_flu_{today}',driver='OpenFileGDB',promote_to_multi=True)
