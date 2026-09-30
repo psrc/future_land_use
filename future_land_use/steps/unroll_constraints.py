@@ -228,6 +228,45 @@ def _check_du_lot_vs_dua(f, all_df, pin_name, qc_dir, today):
 
 
 # ---------------------------------------------------------------------------
+# helper: drop zero-capacity constraints
+# ---------------------------------------------------------------------------
+LOCKOUT_PLAN_TYPE_FLOOR = 9000  # 9xxx plan type ids are lockouts and keep their zero rows
+
+
+def _drop_zero_max_rows(devconstr, qc_dir, today):
+    """Drop constraint rows with no capacity (minimum == 0 and maximum == 0) for
+    non-lockout plan types; 9xxx lockout rows are kept as-is.  A plan type whose rows
+    are all dropped then disappears from devconstr, so `_apply_lockout_plan_types`
+    remaps its parcels to the lockout plan type id.  Returns the filtered table."""
+    drop = (
+        (devconstr['plan_type_id'] < LOCKOUT_PLAN_TYPE_FLOOR)
+        & (devconstr['minimum'] == 0)
+        & (devconstr['maximum'] == 0)
+    )
+    dropped = devconstr.loc[drop]
+    dropped.to_csv(
+        os.path.join(qc_dir, 'zero_max_rows_dropped_' + str(today) + '.csv'), index=False
+    )
+
+    # report plan types with an all-zero maximum (computed before dropping, for QC)
+    max_zero_devconstr = devconstr.groupby('plan_type_id')['maximum'].sum().reset_index()
+    max_zero = max_zero_devconstr[max_zero_devconstr['maximum'] == 0]
+    max_zero.to_csv(
+        os.path.join(qc_dir, 'ptid_consistency_qc_maxzero_' + str(today) + '.csv'),
+        index=False,
+    )
+
+    print(f"Zero-capacity constraint rows dropped: {len(dropped)}")
+    print(
+        f"  plan types with all constraints dropped: "
+        f"{int((max_zero['plan_type_id'] < LOCKOUT_PLAN_TYPE_FLOOR).sum())}"
+    )
+    print('The following are non-9*** lockout plan types, remapped to the lockout plan type id:')
+    print(max_zero)
+    return devconstr.loc[~drop].reset_index(drop=True)
+
+
+# ---------------------------------------------------------------------------
 # helper: lockout plan_type_id assignment
 # ---------------------------------------------------------------------------
 _LU_TYPE_LOCKOUT_MAP = {
@@ -371,28 +410,22 @@ def run_step(context):
     print(f"Rows where minimum > maximum: {int(_min_gt_max.sum())}")
     devconstr.loc[_min_gt_max, 'minimum'] = devconstr.loc[_min_gt_max, 'maximum']
 
-    # ---- consistency check (ptids) ----
+    # ---- drop constraints with no capacity (minimum == 0 and maximum == 0) ----
     ptid_qc_dir = os.path.join(OUTPUT, "ptid_qc")
     os.makedirs(ptid_qc_dir, exist_ok=True)
+    devconstr = _drop_zero_max_rows(devconstr, ptid_qc_dir, today)
 
+    # ---- consistency check (ptids) ----
     common = f.merge(devconstr, on=['plan_type_id', 'plan_type_id'])
     not_in_devconstr = f.loc[
         ~f.plan_type_id.isin(common.plan_type_id),
         ['plan_type_id', 'FLU_master_id', 'juris_zn']
     ]
-    print('WARNING: The following ptids are in object f but not devconstr:\n')
+    print('WARNING: The following ptids are in object f but not devconstr '
+          '(their parcels get remapped to the lockout plan type id):\n')
     print(not_in_devconstr)
     not_in_devconstr.to_csv(
         os.path.join(ptid_qc_dir, 'ptid_consistency_qc_notindevconstr_' + str(today) + '.csv'),
-        index=False,
-    )
-
-    max_zero_devconstr = devconstr.groupby("plan_type_id")['maximum'].sum().reset_index()
-    max_zero = max_zero_devconstr[max_zero_devconstr['maximum'] == 0]
-    print('The following are non-9*** lockout plan types')
-    print(max_zero)
-    max_zero.to_csv(
-        os.path.join(ptid_qc_dir, 'ptid_consistency_qc_maxzero_' + str(today) + '.csv'),
         index=False,
     )
 

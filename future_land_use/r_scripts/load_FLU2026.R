@@ -96,7 +96,7 @@ cols.for.dupl <- c(clean.cols, use.cols, "Juris", "juris_zn", "rural")
 flub <- flu[Bonus_included == "Y"]
 # specific fixes (i.e. for these records do not use bonus records)
 # remove Everett_HI
-flub <- flub[! juris_zn %in% c("Everett_HI")]
+flub <- flub[! juris_zn %in% c("Everett_HI","Redmond_OBAT","Redmond_OV")]
 nflu <- nrow(flub)
 flub[, .N, by = "juris_zn"][order(-N)][N > 1]
 flub <- flub[!duplicated(flub, by = cols.for.dupl)] # removes duplicates

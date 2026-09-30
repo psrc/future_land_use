@@ -179,6 +179,7 @@ The final step: converts the wide, one-row-per-zone FLU table into a long develo
 # Convert lot coverage (LC) columns from percent to proportion.
 # '''Unroll''' each use type into its own constraint rows: single-family and multi-family units-per-acre and units-per-lot, office/commercial/industrial/mixed FAR, and mixed-use units-per-acre.
 # Combine all unrolled rows, clamp any row where <code>minimum &gt; maximum</code>, and run consistency QC (plan types present in the FLU table but missing from the constraints table, or with an all-zero maximum) — written to <code>output/&lt;root&gt;/unroll_constraints/ptid_qc/</code>.
+# '''Drop zero-capacity rows''' — remove constraint rows where <code>minimum == 0</code> and <code>maximum == 0</code> for non-9xxx plan types (the fixed lockout rows are kept). A plan type whose rows are all dropped falls out of the constraints table, so its parcels are remapped to the lockout plan type id. Dropped rows are listed in <code>ptid_qc/zero_max_rows_dropped_&lt;date&gt;.csv</code>.
 # Add fixed zero-value "lockout" constraint rows (<code>plan_type_id = 9999</code>) plus per-land-use-type lockout plan types (e.g. schools, government, hospitals, forest, agriculture, vacant undevelopable) and remap any parcel with a null/unmatched plan type to the appropriate lockout id.
 # Produce an HB 1110 capacity summary CSV grouped by jurisdiction/tier/transit-override.
 
