@@ -1,3 +1,4 @@
 *
 !.gitignore
 !overlay_manual_match.csv
+!juris_zn_shp_to_table_fuzzy.csv
