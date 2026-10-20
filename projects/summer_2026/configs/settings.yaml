@@ -148,7 +148,7 @@ steps: # pypyr pipeline steps to run
   # - future_land_use.steps.run_walksheds
   - future_land_use.steps.load_data
   - future_land_use.steps.get_elmer_data
-  - future_land_use.steps.fuzzy_match_juris_zn
+  - future_land_use.steps.fuzzy_match_juris_zn  # must re-run "load_data" to re-run this step
   - future_land_use.steps.combine_overlays
   - future_land_use.steps.flag_overlay_parcels
   - future_land_use.steps.flag_hb_1110_parcels
