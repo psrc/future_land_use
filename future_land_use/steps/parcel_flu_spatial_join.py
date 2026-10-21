@@ -162,6 +162,26 @@ def _export_juris_pair_counts(dup_df, pin_name, output_dir):
     )
 
 
+def _export_no_table_match_counts(all_df, output_dir):
+    """Export parcels with no plan_type_id, i.e. no FLU shp polygon or no matching FLU table row.
+    Parcels with no spatial match have a null juris_zn and are labelled explicitly."""
+    no_match = all_df[all_df['plan_type_id'].isna()]
+    counts = (
+        no_match['juris_zn'].fillna('(no spatial match to FLU shp)')
+        .value_counts()
+        .rename_axis('juris_zn')
+        .reset_index(name='num_parcels')
+    )
+    qc_dir = os.path.join(output_dir, "flu_qc")
+    os.makedirs(qc_dir, exist_ok=True)
+    counts.to_csv(
+        os.path.join(qc_dir, f'parcels_no_table_match_{date.today()}.csv'),
+        index=False,
+    )
+    print(f"Number of parcels with no FLU match: {len(no_match)} "
+          f"(will be assigned plan type id 9999)")
+
+
 # ----- main step ------------------------------------------------------------------
 
 
@@ -192,6 +212,9 @@ def run_step(context):
 
     # -- QC: juris pair co-occurrence
     _export_juris_pair_counts(dup_df, pin_name, OUTPUT)
+
+    # -- QC: parcels with no FLU table match
+    _export_no_table_match_counts(all_df, OUTPUT)
 
     # -- save output
     df_out = all_df[[pin_name, 'juris_zn', 'plan_type_id']]

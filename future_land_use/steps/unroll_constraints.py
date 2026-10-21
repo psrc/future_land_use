@@ -479,21 +479,10 @@ def run_step(context):
         index=False,
     )
 
-    # ---- QC: parcels with missing FLU match ----
-    (
-        all_df[all_df['plan_type_id'] == 9999]
-        .groupby('juris_zn').size()
-        .reset_index(name='num_parcels')
-        .sort_values(by='num_parcels', ascending=False)
-        .to_csv(
-            os.path.join(OUTPUT, 'flu_qc', 'parcels_no_table_match_' + str(today) + '.csv'),
-            index=False,
-        )
-    )
+    # parcels with no FLU match are reported in parcel_flu_spatial_join
     print(
-        f"Number of parcels with missing FLU match: "
-        f"{len(all_df[all_df['plan_type_id'] == 9999])} parcels "
-        f"will be assigned plan type id 9999"
+        f"Number of parcels assigned lockout plan type id {lockout_id}: "
+        f"{len(all_df[all_df['plan_type_id'] == lockout_id])}"
     )
 
     # ---- HB 1110 analysis ----
