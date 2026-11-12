@@ -56,7 +56,8 @@ def fuzzy_match_juris(pipeline, shp_values, table_values, manual_path: Path):
         else:
             print(f"Note: {manual_path.name} exists but has unexpected schema; ignoring.")
 
-    table_list = list(table_set)
+    # sorted so results don't depend on set iteration order, which changes between Python runs
+    table_list = sorted(table_set)
     table_norm = {t: _normalize(t) for t in table_list}
 
     rows = []
@@ -66,14 +67,19 @@ def fuzzy_match_juris(pipeline, shp_values, table_values, manual_path: Path):
         # Best fuzzy candidate in table_juris
         best_score = 0.0
         best_cand = None
+        n_best = 0
         for t in table_list:
             score = SequenceMatcher(None, norm_shp, table_norm[t]).ratio()
             if score > best_score:
                 best_score = score
                 best_cand = t
+                n_best = 1
+            elif score == best_score:
+                n_best += 1
 
         suggested = best_cand if best_score >= cfg['min_cutoff'] else None
-        auto = best_score >= cfg['auto_cutoff']
+        # a tie for the best score is ambiguous, so never auto-accept it
+        auto = best_score >= cfg['auto_cutoff'] and n_best == 1
 
         prior_row = prior_lookup.get(shp_val, {})
         manual_match = prior_row.get("manual_match", "")

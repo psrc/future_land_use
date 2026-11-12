@@ -405,10 +405,10 @@ def run_step(context):
     
     _min_gt_max = (
         devconstr['minimum'].notna() & devconstr['maximum'].notna()
-        & (devconstr['minimum'] > devconstr['maximum'])
+        & (devconstr['minimum'] >= devconstr['maximum'])
     )
     print(f"Rows where minimum > maximum: {int(_min_gt_max.sum())}")
-    devconstr.loc[_min_gt_max, 'minimum'] = devconstr.loc[_min_gt_max, 'maximum']
+    devconstr.loc[_min_gt_max, 'minimum'] = devconstr.loc[_min_gt_max, 'maximum'] * 0.5
 
     # ---- drop constraints with no capacity (minimum == 0 and maximum == 0) ----
     ptid_qc_dir = os.path.join(OUTPUT, "ptid_qc")

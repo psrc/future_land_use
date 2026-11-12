@@ -53,13 +53,13 @@ def _load_old_flu_shp(p, path, rename_dict=None):
     p.save_geodataframe(old_flu_shp, 'old_flu_shp')
 
 
-def _load_old_flu_crosswalk(p, path, sheet, rename_dict=None):
-    """Read in the old FLU crosswalk Excel table and save to pipeline."""
+def _load_old_flu_crosswalk(p, path, rename_dict=None):
+    """Read in the old FLU CSV, reduce to unique zone/definition pairs, and save to pipeline."""
     print(f"Reading in old FLU crosswalk {path}...")
     old_xwalk = (
-        pd.read_excel(path, sheet_name=sheet)
-        [["FLUadj_Key", "FLUadj_Definition"]]
+        pd.read_csv(path, usecols=["Juris_zn", "Definition"])
         .dropna()
+        .drop_duplicates(subset="Juris_zn")
     )
     if rename_dict:
         old_xwalk = old_xwalk.rename(columns=rename_dict)
@@ -95,5 +95,5 @@ def run_step(context):
     _load_parcel_land_use(p, CACHE, pin_name)
     _load_flu_table(p, FLU_TABLE_PATH, FLU_TABLE_SHEET, rename_dict=global_cfg.get('flu_table_rename_cols', {}))
     _load_old_flu_shp(p, old_flu_cfg['old_flu_shp'],rename_dict=old_flu_shp_rename)
-    _load_old_flu_crosswalk(p, old_flu_cfg['old_crosswalk'], old_flu_cfg['old_crosswalk_sheet'],rename_dict=old_flu_xwalk_rename)
+    _load_old_flu_crosswalk(p, old_flu_cfg['old_crosswalk'], rename_dict=old_flu_xwalk_rename)
     return context

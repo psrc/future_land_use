@@ -48,11 +48,10 @@ old_flu_crosswalk_settings:
     Juris_zn: juris_zn
     Jurisdicti: juris
 
-  old_crosswalk: J:/Staff/Christy/usim-baseyear/flu/Full_FLU_Master_Corres_File.xlsx 
+  old_crosswalk: Q:/Projects/2023_Baseyear/FLU_and_Lockouts/old_flu/final_flu_postprocessed_2023-01-10.csv
   old_crosswalk_rename_cols:
-    FLUadj_Key: juris_zn
-    FLUadj_Definition: definition
-  old_crosswalk_sheet: Full Master FLU Corres File # sheet name in the old flu crosswalk table
+    Juris_zn: juris_zn
+    Definition: definition
   fuzzy_match_cutoff: 0.4       # SequenceMatcher ratio required to accept a fuzzy name match
   spatial_overlap_cutoff: 0.9   # share of new-zone area overlapping an old zone to auto-accept
   crosswalk_output_dir: old_flu_crosswalk # output directory for old flu crosswalk files, relative to root_dir above or absolute
