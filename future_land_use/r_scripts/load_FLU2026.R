@@ -22,7 +22,8 @@ maxht.cols <- str_subset(colnames(flu), "^MaxHt.*_[R|C|O|I|M].*")
 lc.cols <- str_subset(colnames(flu), "^LC_[R|C|O|I|M].*")
 # For FAR imputation, set different floor heights for different uses 
 # (taken from ChatGPT and checked on averages from this dataset)
-floor.heights <- c(12, 20, 15, 33, 18) # Res, Office, Comm, Indust, Mixed
+# (named and ordered by use.cols, so that the values match the column order of the uses)
+floor.heights <- c(Res = 12, Office = 20, Comm = 15, Indust = 33, Mixed = 18)[sub("_Use$", "", use.cols)]
     
 # organize column names into sets of lists
 # an iterator for loops
