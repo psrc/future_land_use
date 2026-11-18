@@ -24,6 +24,21 @@ lc.cols <- str_subset(colnames(flu), "^LC_[R|C|O|I|M].*")
 # (taken from ChatGPT and checked on averages from this dataset)
 # (named and ordered by use.cols, so that the values match the column order of the uses)
 floor.heights <- c(Res = 12, Office = 20, Comm = 15, Indust = 33, Mixed = 18)[sub("_Use$", "", use.cols)]
+
+# Default lot coverage (in %) used when LC is neither collected nor available from the old FLU.
+# Fixed values (rather than medians computed on the fly), so that edits of individual zones
+# do not shift the LC of other zones. Derived from medians of collected LC
+# (Zoning_2026_d3_09-30.xlsx, use and rural flags as of 2026-11-17).
+# Rural non-res uses are pooled (only 1-4 rural zones per use have collected LC).
+default.lc <- data.table(
+    use = rep(c("Res", "Comm", "Office", "Indust", "Mixed"), each = 3),
+    lc_cat = rep(c("rural", "urban_mixed", "urban_notmixed"), 5),
+    lc = c(30,   80, 50,   # Res
+           32.5, 80, 75,   # Comm
+           32.5, 80, 70,   # Office
+           32.5, 85, 80,   # Indust
+           32.5, 80, 80)   # Mixed (urban_notmixed not used, as mixed use implies urban_mixed)
+)
     
 # organize column names into sets of lists
 # an iterator for loops
