@@ -6,6 +6,7 @@ from future_land_use.util.pipeline import Pipeline
 
 ID_COLS = ['plan_type_id', 'generic_land_use_type_id', 'constraint_type']
 LC_COLS = ['LC_Res', 'LC_Office', 'LC_Comm', 'LC_Indust', 'LC_Mixed']
+SF_MAX_MIN_DU = 11.9  # SF-flagged zones with MinDU_Res above this get no glu 1 constraint
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +73,7 @@ def _unroll_residential(f):
     Returns (sf, mf)."""
     res = f['Res_Use'] == 1
     flags_na = f['SingleFamily_Use'].isna() & f['MultiFamily_Use'].isna()
-    sf_flagged = (f['SingleFamily_Use'] == 'Y') & (f['MultiFamily_Use'] != 'Y')
+    sf_flagged = (f['SingleFamily_Use'] == 'Y') & ~(f['MinDU_Res'] > SF_MAX_MIN_DU)
     mf_flagged = (f['MultiFamily_Use'] == 'Y')
 
     res_cols = ['MinDU_Res', 'MaxDU_Res', 'LC_Res', 'MaxHt_Res']
@@ -92,7 +93,7 @@ def _unroll_residential(f):
     sf_new = _build_res(sf_new_mask, 1)
     sf = pd.concat([sf_old, sf_new], ignore_index=True)
     print(f"SF (old/density-only, flags NA & MaxDU_Res < 35.1): {len(sf_old)}")
-    print(f"SF (new flag, SingleFamily_Use == 'Y'):              {len(sf_new)}")
+    print(f"SF (new flag, SingleFamily_Use == 'Y', MinDU_Res <= {SF_MAX_MIN_DU}): {len(sf_new)}")
     print(f"SF total rows going into devconstr:                  {len(sf)}")
 
     # --- MF ---
